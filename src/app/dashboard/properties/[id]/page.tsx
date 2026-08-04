@@ -6,6 +6,7 @@ import { deleteProperty } from "@/app/dashboard/actions";
 import { ApplianceEditor } from "@/components/dashboard/appliance-editor";
 import { SubmitButton } from "@/components/dashboard/form-parts";
 import { GuideEditor } from "@/components/dashboard/guide-editor";
+import { Inbox } from "@/components/dashboard/inbox";
 import {
   EmergencyForm,
   EssentialsForm,
@@ -18,7 +19,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { requireProperty } from "@/lib/dashboard/guard";
 import { publicEnv } from "@/lib/env";
-import type { Appliance, LocalGuide, Upsell } from "@/types/database";
+import type {
+  Alert,
+  Appliance,
+  ChatSession,
+  LocalGuide,
+  Upsell,
+} from "@/types/database";
 
 type PageProps = { params: { id: string } };
 
@@ -35,6 +42,7 @@ const TABS = [
   { value: "upsells", label: "Upsells" },
   { value: "emergency", label: "Emergency" },
   { value: "qr", label: "QR code" },
+  { value: "inbox", label: "Inbox" },
 ];
 
 export default async function PropertyPage({ params }: PageProps) {
@@ -43,7 +51,8 @@ export default async function PropertyPage({ params }: PageProps) {
 
   const { supabase, property } = context;
 
-  const [appliancesResult, guidesResult, upsellsResult] = await Promise.all([
+  const [appliancesResult, guidesResult, upsellsResult, alertsResult, sessionsResult] =
+    await Promise.all([
     supabase
       .from("appliances")
       .select("*")
@@ -59,11 +68,25 @@ export default async function PropertyPage({ params }: PageProps) {
       .select("*")
       .eq("property_id", property.id)
       .order("created_at", { ascending: true }),
+    supabase
+      .from("alerts")
+      .select("*")
+      .eq("property_id", property.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("chat_sessions")
+      .select("*")
+      .eq("property_id", property.id)
+      .order("last_seen_at", { ascending: false })
+      .limit(10),
   ]);
 
   const appliances = (appliancesResult.data ?? []) as Appliance[];
   const guides = (guidesResult.data ?? []) as LocalGuide[];
   const upsells = (upsellsResult.data ?? []) as Upsell[];
+  const alerts = (alertsResult.data ?? []) as Alert[];
+  const sessions = (sessionsResult.data ?? []) as ChatSession[];
 
   const chatUrl = `${publicEnv.siteUrl()}/chat/${property.id}`;
 
@@ -171,6 +194,10 @@ export default async function PropertyPage({ params }: PageProps) {
               <QrPanel chatUrl={chatUrl} propertyName={property.name} />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="inbox">
+          <Inbox propertyId={property.id} alerts={alerts} sessions={sessions} />
         </TabsContent>
       </Tabs>
     </main>

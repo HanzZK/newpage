@@ -276,3 +276,21 @@ export async function deleteUpsell(formData: FormData): Promise<void> {
 
   revalidatePath(`/dashboard/properties/${id}`);
 }
+
+// ---------------------------------------------------------------------
+// Alerts
+// ---------------------------------------------------------------------
+
+export async function acknowledgeAlert(formData: FormData): Promise<void> {
+  const id = propertyId(formData);
+  const context = await requireProperty(id);
+  if (!context) return;
+
+  await context.supabase
+    .from("alerts")
+    .update({ acknowledged_at: new Date().toISOString() })
+    .eq("id", text(formData, "alertId"))
+    .eq("property_id", id);
+
+  revalidatePath(`/dashboard/properties/${id}`);
+}

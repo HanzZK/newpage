@@ -5,16 +5,19 @@ property profile and gets a QR code; the guest scans it and talks to an AI that
 knows the wifi password, how the washing machine works, when the bins go out,
 and which upsells are for sale.
 
-**Status: Phase 1 complete** — Next.js + Tailwind + shadcn/ui scaffold, Supabase
-auth wired end to end, full Postgres schema with RLS.
+**Status: Phase 4 complete** — the concierge answers guests, reads their photos,
+judges sentiment, offers paid extras and alerts the host.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Foundation, auth, database schema | ✅ done |
-| 2 | Host dashboard, property editor, QR generator | next |
-| 3 | Guest chat UI (`/chat/[propertyId]`) + image upload | |
-| 4 | Claude API route, master system prompt, sentiment + upsell logic | |
-| 5 | Stripe, webhooks, Vercel deploy | |
+| 2 | Host dashboard, property editor, QR generator | ✅ done |
+| 3 | Guest chat UI (`/chat/[propertyId]`) + image upload | ✅ done |
+| 4 | Claude API route, master system prompt, sentiment + upsell logic | ✅ done |
+| 5 | Stripe, webhooks, Vercel deploy | next |
+
+To run Phase 4 you need `ANTHROPIC_API_KEY` in `.env.local`. Without it the
+guest chat returns an error on send; everything else still works.
 
 ---
 
@@ -118,6 +121,12 @@ src/
     auth/login-form.tsx
     ui/                      shadcn/ui primitives
   lib/
+    chat/
+      prompt.ts              the master system prompt
+      reply.ts               the single Claude call (answer + sentiment + upsell)
+      alerts.ts              alert rows and host webhook delivery
+      context.ts             loads the full property brief, server-side only
+      rate-limit.ts          per-process brake on the public endpoints
     env.ts                   typed env accessors with clear failure messages
     supabase/{client,server,admin,middleware}.ts
   types/database.ts          mirror of supabase/schema.sql
@@ -137,3 +146,24 @@ legacy/                      the previous static site, kept for reference
 - The `legacy/` folder holds the static HTML site that was previously at the
   repo root. It was moved so Next.js wouldn't treat `pages/` as a Pages Router
   directory; nothing was deleted.
+
+## How the concierge works
+
+One Claude call per guest message returns structured JSON — the reply, the
+detected language, a sentiment grade, an escalation flag and, when one fits,
+the id of a paid extra. Doing it in one call instead of answer-then-classify
+halves both the latency a guest waits and the bill.
+
+Three deliberate constraints:
+
+- **The model never writes a payment URL.** It selects an offer *id*; the
+  server attaches the host's real Stripe link. A hallucinated payment link is
+  the worst bug this product could ship, so the model is never in a position
+  to produce one — and any Stripe URL it writes anyway is stripped.
+- **A `critical` sentiment always alerts the host**, whatever the model set
+  for the escalation flag. Two independent signals, either one is enough.
+- **Guest messages are untrusted input.** The prompt states this explicitly,
+  and the property brief is the only source the model may answer from.
+
+Alerts are written to the database first and delivered to the host's webhook
+second, so a failed delivery still leaves a trail in the property's Inbox tab.
