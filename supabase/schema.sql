@@ -1,5 +1,5 @@
 -- =====================================================================
--- HostAI Concierge — Phase 1 schema
+-- Mouravi (მოურავი) — schema
 -- Run this whole file in the Supabase SQL Editor (one shot, idempotent).
 -- =====================================================================
 
@@ -51,6 +51,20 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- Backfill. The trigger above only fires on NEW signups, so anyone who
+-- registered before this file was first run has an auth.users row and no
+-- profile. Every other table's foreign key points at profiles, so without
+-- this their first property fails with
+--   violates foreign key constraint "properties_host_id_fkey"
+-- Idempotent, and cheap — run on every re-apply.
+insert into public.profiles (id, email, full_name)
+select
+  u.id,
+  u.email,
+  coalesce(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name')
+from auth.users u
+on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------
 -- 2. properties — the apartment. One QR code per row.
@@ -152,7 +166,12 @@ create trigger local_guides_set_updated_at
   for each row execute function public.set_updated_at();
 
 -- ---------------------------------------------------------------------
--- 5. upsells — the revenue engine (Stripe Payment Links)
+-- 5. upsells — the revenue engine (host-supplied payment links)
+--
+-- The link is whatever the host's own payment provider mints: a Stripe
+-- Payment Link, a Bank of Georgia or TBC link, unipay, Payze. We only ever
+-- store and forward a URL, so the product works in markets Stripe does not
+-- serve — Georgia among them.
 -- ---------------------------------------------------------------------
 create table if not exists public.upsells (
   id                  uuid primary key default gen_random_uuid(),
@@ -160,13 +179,32 @@ create table if not exists public.upsells (
   title               text not null,          -- "Late check-out until 6pm"
   description         text,
   price_cents         int not null default 0 check (price_cents >= 0),
-  currency            text not null default 'EUR',
-  stripe_payment_link text,                   -- pasted from Stripe dashboard
+  currency            text not null default 'GEL',
+  payment_link        text,                   -- pasted from the host's provider
   trigger_keywords    text[] not null default '{}',  -- ['late checkout','stay longer']
   is_active           boolean not null default true,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );
+
+-- Upgrade path for installs created before the provider-agnostic rename.
+alter table public.upsells
+  add column if not exists payment_link text;
+
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'upsells'
+      and column_name = 'stripe_payment_link'
+  ) then
+    update public.upsells
+      set payment_link = stripe_payment_link
+      where payment_link is null and stripe_payment_link is not null;
+    alter table public.upsells drop column stripe_payment_link;
+  end if;
+end $$;
 
 create index if not exists upsells_property_id_idx on public.upsells(property_id);
 
@@ -297,12 +335,17 @@ create policy "guest_uploads_read" on storage.objects
 -- public insert policy is granted here on purpose.
 
 -- =====================================================================
--- Phase 5 — Stripe revenue tracking
+-- Phase 5 — revenue tracking
 --
--- Payment Links belong to the HOST's own Stripe account, not ours, so the
--- host points their Stripe webhook at a URL carrying their own opaque token
--- and pastes their signing secret. No Stripe Connect onboarding, no platform
--- account, nothing for the host to approve beyond a webhook endpoint.
+-- Two ways a sale gets recorded:
+--
+--   source = 'stripe'  the host runs Stripe, points its webhook at a URL
+--                      carrying their own opaque token and pastes the
+--                      signing secret. Fully automatic. No Stripe Connect
+--                      onboarding, no platform account.
+--   source = 'manual'  the host banks somewhere Stripe does not reach
+--                      (Bank of Georgia, TBC, unipay …) and ticks the sale
+--                      off by hand. This is the default path in Georgia.
 -- =====================================================================
 
 alter table public.profiles
@@ -320,14 +363,41 @@ create table if not exists public.upsell_purchases (
   session_id                  uuid references public.chat_sessions(id) on delete set null,
 
   -- Stripe sends every event at least once. This makes replays a no-op.
-  stripe_event_id             text not null unique,
+  -- Null for manual rows; Postgres lets a unique index hold many nulls, so
+  -- hand-entered sales never collide with each other.
+  stripe_event_id             text unique,
   stripe_checkout_session_id  text,
 
+  source                      text not null default 'stripe'
+                                check (source in ('stripe', 'manual')),
+  note                        text,
+
   amount_cents                int not null default 0 check (amount_cents >= 0),
-  currency                    text not null default 'EUR',
+  currency                    text not null default 'GEL',
   guest_email                 text,
   created_at                  timestamptz not null default now()
 );
+
+-- Upgrade path for installs created before manual sales existed.
+alter table public.upsell_purchases
+  add column if not exists source text not null default 'stripe',
+  add column if not exists note   text;
+
+alter table public.upsell_purchases
+  alter column stripe_event_id drop not null;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.upsell_purchases'::regclass
+      and conname  = 'upsell_purchases_source_check'
+  ) then
+    alter table public.upsell_purchases
+      add constraint upsell_purchases_source_check
+      check (source in ('stripe', 'manual'));
+  end if;
+end $$;
 
 create index if not exists upsell_purchases_host_id_idx
   on public.upsell_purchases(host_id, created_at desc);
@@ -339,3 +409,96 @@ alter table public.upsell_purchases enable row level security;
 drop policy if exists "upsell_purchases_select_own" on public.upsell_purchases;
 create policy "upsell_purchases_select_own" on public.upsell_purchases
   for select using (auth.uid() = host_id);
+
+-- A host may add and remove their OWN hand-entered sales, and nothing else.
+-- Stripe-sourced rows are written by the service role and stay read-only, so
+-- a host can never fabricate or erase a bank-verified payment.
+drop policy if exists "upsell_purchases_insert_manual" on public.upsell_purchases;
+create policy "upsell_purchases_insert_manual" on public.upsell_purchases
+  for insert with check (auth.uid() = host_id and source = 'manual');
+
+drop policy if exists "upsell_purchases_delete_manual" on public.upsell_purchases;
+create policy "upsell_purchases_delete_manual" on public.upsell_purchases
+  for delete using (auth.uid() = host_id and source = 'manual');
+
+-- =====================================================================
+-- Phase 8 — shared rate limiting
+--
+-- The guest endpoints are unauthenticated and call a paid API. The
+-- in-process limiter in src/lib/chat/rate-limit.ts resets on every cold
+-- start and counts separately per warm instance, so N instances allow N×
+-- the limit. This table moves the counter somewhere all instances share.
+--
+-- Written and read only by the service role (the guest API routes), so RLS
+-- is on with no policies at all: nothing reachable from a browser can read
+-- or write it.
+-- =====================================================================
+
+create table if not exists public.rate_limits (
+  key       text primary key,
+  count     int not null default 0,
+  reset_at  timestamptz not null
+);
+
+alter table public.rate_limits enable row level security;
+
+-- RLS with no policies already returns zero rows to a browser client, but the
+-- request still succeeds with 200 — which confirms the table exists. Revoking
+-- the grants makes it a permission error instead. Defence in depth: the API
+-- routes reach this through the service role, which is unaffected.
+revoke all on table public.rate_limits from anon, authenticated;
+
+create index if not exists rate_limits_reset_at_idx
+  on public.rate_limits(reset_at);
+
+/**
+ * Increment and test in one statement.
+ *
+ * The whole point is the `insert … on conflict do update … returning`: it is
+ * a single atomic round trip, so two concurrent requests cannot both read
+ * count=N and both write N+1. A read-then-write version of this function
+ * would let a burst through the limit — which is the exact thing being
+ * defended against.
+ */
+create or replace function public.consume_rate_limit(
+  p_key       text,
+  p_limit     int,
+  p_window_ms int
+)
+returns table (allowed boolean, retry_after_seconds int)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_now    timestamptz := now();
+  v_window interval    := make_interval(secs => p_window_ms / 1000.0);
+  v_count  int;
+  v_reset  timestamptz;
+begin
+  insert into public.rate_limits as rl (key, count, reset_at)
+  values (p_key, 1, v_now + v_window)
+  on conflict (key) do update
+    set count = case
+                  when rl.reset_at <= v_now then 1
+                  else rl.count + 1
+                end,
+        reset_at = case
+                     when rl.reset_at <= v_now then v_now + v_window
+                     else rl.reset_at
+                   end
+  returning rl.count, rl.reset_at into v_count, v_reset;
+
+  -- Opportunistic cleanup. Cheap, and saves needing a scheduled job for a
+  -- table whose rows are all short-lived anyway.
+  if random() < 0.01 then
+    delete from public.rate_limits where reset_at < v_now - interval '1 hour';
+  end if;
+
+  return query
+    select v_count <= p_limit,
+           greatest(1, ceil(extract(epoch from (v_reset - v_now))))::int;
+end;
+$$;
+
+revoke all on function public.consume_rate_limit(text, int, int) from public, anon, authenticated;

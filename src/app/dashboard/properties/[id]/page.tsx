@@ -31,18 +31,18 @@ type PageProps = { params: { id: string } };
 
 export async function generateMetadata({ params }: PageProps) {
   const context = await requireProperty(params.id);
-  return { title: `${context?.property.name ?? "Property"} · HostAI Concierge` };
+  return { title: `${context?.property.name ?? "ბინა"} · მოურავი` };
 }
 
 const TABS = [
-  { value: "essentials", label: "Essentials" },
-  { value: "rules", label: "Rules" },
-  { value: "appliances", label: "Appliances" },
-  { value: "guide", label: "Local guide" },
-  { value: "upsells", label: "Upsells" },
-  { value: "emergency", label: "Emergency" },
-  { value: "qr", label: "QR code" },
-  { value: "inbox", label: "Inbox" },
+  { value: "essentials", label: "ძირითადი" },
+  { value: "rules", label: "წესები" },
+  { value: "appliances", label: "ტექნიკა" },
+  { value: "guide", label: "გზამკვლევი" },
+  { value: "upsells", label: "შეთავაზებები" },
+  { value: "emergency", label: "საგანგებო" },
+  { value: "qr", label: "QR კოდი" },
+  { value: "inbox", label: "შემოსული" },
 ];
 
 export default async function PropertyPage({ params }: PageProps) {
@@ -98,7 +98,7 @@ export default async function PropertyPage({ params }: PageProps) {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
-          All properties
+          ყველა ბინა
         </Link>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -108,7 +108,7 @@ export default async function PropertyPage({ params }: PageProps) {
                 {property.name}
               </h1>
               <Badge variant={property.is_active ? "secondary" : "outline"}>
-                {property.is_active ? "live" : "paused"}
+                {property.is_active ? "აქტიური" : "შეჩერებული"}
               </Badge>
             </div>
             {property.address ? (
@@ -119,7 +119,7 @@ export default async function PropertyPage({ params }: PageProps) {
           <form action={deleteProperty}>
             <input type="hidden" name="propertyId" value={property.id} />
             <SubmitButton variant="outline" size="sm">
-              Delete property
+              ბინის წაშლა
             </SubmitButton>
           </form>
         </div>
@@ -140,7 +140,7 @@ export default async function PropertyPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                Wi-Fi, check-in, the basics
+                Wi-Fi, შემოსვლა და ძირითადი ინფორმაცია
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -152,7 +152,7 @@ export default async function PropertyPage({ params }: PageProps) {
         <TabsContent value="rules">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">House rules</CardTitle>
+              <CardTitle className="text-base">სახლის წესები</CardTitle>
             </CardHeader>
             <CardContent>
               <RulesForm property={property} />
@@ -176,7 +176,7 @@ export default async function PropertyPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                Who to call, and how you get alerted
+                ვის დაურეკოს და როგორ მიიღებ შეტყობინებას
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -188,7 +188,7 @@ export default async function PropertyPage({ params }: PageProps) {
         <TabsContent value="qr">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Guest QR code</CardTitle>
+              <CardTitle className="text-base">სტუმრის QR კოდი</CardTitle>
             </CardHeader>
             <CardContent>
               <QrPanel chatUrl={chatUrl} propertyName={property.name} />

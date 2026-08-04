@@ -35,7 +35,7 @@ const SUGGESTIONS = [
 ];
 
 function storageKey(propertyId: string) {
-  return `hostai:session:${propertyId}`;
+  return `mouravi:session:${propertyId}`;
 }
 
 export function GuestChat({

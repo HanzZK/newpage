@@ -34,9 +34,22 @@ export const serverEnv = {
       process.env.SUPABASE_SERVICE_ROLE_KEY,
       "SUPABASE_SERVICE_ROLE_KEY",
     ),
-  anthropicApiKey: () =>
-    required(process.env.ANTHROPIC_API_KEY, "ANTHROPIC_API_KEY"),
-  anthropicModel: () => process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5",
+  geminiApiKey: () =>
+    required(process.env.GEMINI_API_KEY, "GEMINI_API_KEY"),
+  geminiModel: () => process.env.GEMINI_MODEL ?? "gemini-3.6-flash",
+  cronSecret: () => required(process.env.CRON_SECRET, "CRON_SECRET"),
+  /**
+   * Days a guest photo is kept before the cleanup job removes it.
+   *
+   * Fractional values are allowed (0.5 = twelve hours) — useful for testing
+   * the delete path without waiting a day. Zero and negative values fall back
+   * to the default rather than being honoured: "delete everything immediately"
+   * is never what a mistyped env var should mean.
+   */
+  uploadRetentionDays: () => {
+    const raw = Number(process.env.UPLOAD_RETENTION_DAYS);
+    return Number.isFinite(raw) && raw > 0 ? raw : 30;
+  },
   stripeSecretKey: () =>
     required(process.env.STRIPE_SECRET_KEY, "STRIPE_SECRET_KEY"),
 };

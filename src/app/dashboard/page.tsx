@@ -13,7 +13,7 @@ import {
 import { requireUser } from "@/lib/dashboard/guard";
 
 export const metadata = {
-  title: "Properties · HostAI Concierge",
+  title: "ბინები · მოურავი",
 };
 
 export default async function DashboardPage() {
@@ -27,19 +27,19 @@ export default async function DashboardPage() {
   return (
     <main className="space-y-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Properties</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">ბინები</h1>
         <p className="text-sm text-muted-foreground">
-          One concierge, one QR code, per apartment.
+          თითო ბინაზე ერთი კონსიერჟი და ერთი QR კოდი.
         </p>
       </header>
 
       {error ? (
         <Card className="border-destructive/50">
           <CardHeader>
-            <CardTitle className="text-base">Could not load properties</CardTitle>
+            <CardTitle className="text-base">ბინები ვერ ჩაიტვირთა</CardTitle>
             <CardDescription>
-              {error.message}. Have you run <code>supabase/schema.sql</code> in
-              the SQL Editor?
+              {error.message}. გაუშვი <code>supabase/schema.sql</code>
+              SQL Editor-ში.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
                     <Badge
                       variant={property.is_active ? "secondary" : "outline"}
                     >
-                      {property.is_active ? "live" : "paused"}
+                      {property.is_active ? "აქტიური" : "შეჩერებული"}
                     </Badge>
                   </div>
                   {property.address ? (
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
                   ) : null}
                 </CardHeader>
                 <CardContent className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  Open
+                  გახსნა
                   <ArrowRight
                     className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
                     aria-hidden
@@ -85,9 +85,9 @@ export default async function DashboardPage() {
 
       <Card className="border-dashed">
         <CardHeader>
-          <CardTitle className="text-base">Add a property</CardTitle>
+          <CardTitle className="text-base">ბინის დამატება</CardTitle>
           <CardDescription>
-            Start with the name — you can fill in the rest on the next screen.
+            დაიწყე სახელით — დანარჩენს შემდეგ გვერდზე შეავსებ.
           </CardDescription>
         </CardHeader>
         <CardContent>

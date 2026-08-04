@@ -16,7 +16,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "HostAI Concierge",
+  title: "მოურავი",
   description:
     "A 24/7 multilingual AI concierge for Airbnb and Booking.com hosts.",
 };

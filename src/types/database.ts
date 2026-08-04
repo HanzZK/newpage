@@ -37,14 +37,29 @@ export type Profile = {
   updated_at: string;
 };
 
+/** Shared rate-limit counter. Written only by the service role — see
+ *  `consume_rate_limit` in supabase/schema.sql. */
+export type RateLimitRow = {
+  key: string;
+  count: number;
+  reset_at: string;
+};
+
+/** How a sale got recorded. Georgian banks have no Stripe-style webhook, so
+ *  hosts outside Stripe's 45 countries tick sales off by hand. */
+export type PurchaseSource = "stripe" | "manual";
+
 export type UpsellPurchase = {
   id: string;
   host_id: string;
   property_id: string | null;
   upsell_id: string | null;
   session_id: string | null;
-  stripe_event_id: string;
+  /** Null on manual rows — the unique index tolerates many nulls. */
+  stripe_event_id: string | null;
   stripe_checkout_session_id: string | null;
+  source: PurchaseSource;
+  note: string | null;
   amount_cents: number;
   currency: string;
   guest_email: string | null;
@@ -116,7 +131,8 @@ export type Upsell = {
   description: string | null;
   price_cents: number;
   currency: string;
-  stripe_payment_link: string | null;
+  /** Whatever the host's own provider mints — Stripe, Bank of Georgia, TBC, unipay. */
+  payment_link: string | null;
   trigger_keywords: string[];
   is_active: boolean;
   created_at: string;
@@ -180,12 +196,18 @@ export type Database = {
       chat_messages: Row<ChatMessage>;
       alerts: Row<Alert>;
       upsell_purchases: Row<UpsellPurchase>;
+      rate_limits: Row<RateLimitRow>;
     };
     // Note the `{ [_ in never]: never }` idiom — `Record<string, never>`
     // would make `keyof Views` equal `string`, and PostgREST's select-query
     // parser would then resolve every table as an empty view (`never`).
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      consume_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_ms: number };
+        Returns: { allowed: boolean; retry_after_seconds: number }[];
+      };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };

@@ -38,44 +38,44 @@ export function EssentialsForm({ property }: { property: Property }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           name="name"
-          label="Property name"
+          label="ბინის სახელი"
           required
           defaultValue={property.name}
-          placeholder="Seaside Studio, Batumi"
+          placeholder="ზღვისპირა სტუდიო, ბათუმი"
         />
         <Field
           name="address"
-          label="Address"
+          label="მისამართი"
           defaultValue={property.address}
-          placeholder="12 Rustaveli Ave, Batumi"
+          placeholder="რუსთაველის 12, ბათუმი"
         />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           name="wifi_ssid"
-          label="Wi-Fi network"
+          label="Wi-Fi ქსელი"
           defaultValue={property.wifi_ssid}
           placeholder="Seaside_5G"
         />
         <Field
           name="wifi_password"
-          label="Wi-Fi password"
+          label="Wi-Fi პაროლი"
           defaultValue={property.wifi_password}
-          hint="Shown to guests in chat. Never exposed to the public client."
+          hint="სტუმარს ჩატში ეუბნება. ბრაუზერში არასდროს ჩანს."
         />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           name="checkin_time"
-          label="Check-in from"
+          label="შემოსვლა"
           defaultValue={property.checkin_time}
           placeholder="15:00"
         />
         <Field
           name="checkout_time"
-          label="Check-out by"
+          label="გასვლა"
           defaultValue={property.checkout_time}
           placeholder="11:00"
         />
@@ -83,41 +83,41 @@ export function EssentialsForm({ property }: { property: Property }) {
 
       <TextField
         name="checkin_instructions"
-        label="Check-in instructions"
+        label="შემოსვლის ინსტრუქცია"
         defaultValue={property.checkin_instructions}
-        placeholder="Key safe is left of the door, code 4417. Lift to floor 4."
+        placeholder="გასაღების ყუთი კარის მარცხნივ, კოდი 4417. ლიფტით მე-4 სართულზე."
       />
       <TextField
         name="checkout_instructions"
-        label="Check-out instructions"
+        label="გასვლის ინსტრუქცია"
         defaultValue={property.checkout_instructions}
-        placeholder="Leave keys on the table, close the windows."
+        placeholder="გასაღები მაგიდაზე დატოვე, ფანჯრები დახურე."
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField
           name="parking_info"
-          label="Parking"
+          label="პარკინგი"
           rows={3}
           defaultValue={property.parking_info}
-          placeholder="Free street parking on the north side after 18:00."
+          placeholder="უფასო პარკინგი ჩრდილოეთ მხარეს 18:00-ის შემდეგ."
         />
         <TextField
           name="trash_info"
-          label="Rubbish & recycling"
+          label="ნაგავი"
           rows={3}
           defaultValue={property.trash_info}
-          placeholder="Bins in the courtyard. Glass goes in the green container."
+          placeholder="ურნები ეზოში. მინა მწვანე კონტეინერში."
         />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           name="default_language"
-          label="Default language"
+          label="ძირითადი ენა"
           defaultValue={property.default_language}
-          hint="Two-letter code. The AI still replies in whatever language the guest writes."
-          placeholder="en"
+          hint="ორასოიანი კოდი. AI მაინც იმ ენაზე პასუხობს, რომელზეც სტუმარი წერს."
+          placeholder="ka"
         />
         <div className="flex items-center gap-3 pt-6">
           <Switch
@@ -126,7 +126,7 @@ export function EssentialsForm({ property }: { property: Property }) {
             defaultChecked={property.is_active}
           />
           <Label htmlFor="is_active" className="font-normal">
-            Concierge is live for guests
+            კონსიერჟი სტუმრებისთვის ჩართულია
           </Label>
         </div>
       </div>
@@ -145,30 +145,30 @@ export function RulesForm({ property }: { property: Property }) {
 
       <TextField
         name="house_rules"
-        label="House rules"
+        label="სახლის წესები"
         rows={5}
         defaultValue={property.house_rules}
-        placeholder="No parties. Shoes off indoors. Max 4 guests."
+        placeholder="წვეულებები აკრძალულია. ფეხსაცმელი კარებთან. მაქსიმუმ 4 სტუმარი."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Field
           name="quiet_hours"
-          label="Quiet hours"
+          label="სიჩუმის საათები"
           defaultValue={property.quiet_hours}
           placeholder="22:00 – 08:00"
         />
         <Field
           name="smoking_policy"
-          label="Smoking"
+          label="მოწევა"
           defaultValue={property.smoking_policy}
-          placeholder="Balcony only"
+          placeholder="მხოლოდ აივანზე"
         />
         <Field
           name="pet_policy"
-          label="Pets"
+          label="შინაური ცხოველები"
           defaultValue={property.pet_policy}
-          placeholder="Small dogs welcome"
+          placeholder="პატარა ძაღლები დასაშვებია"
         />
       </div>
 
@@ -187,13 +187,13 @@ export function EmergencyForm({ property }: { property: Property }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           name="host_name"
-          label="Host name"
+          label="მასპინძლის სახელი"
           defaultValue={property.host_name}
-          placeholder="Nino"
+          placeholder="ნინო"
         />
         <Field
           name="host_phone"
-          label="Host phone"
+          label="მასპინძლის ტელეფონი"
           defaultValue={property.host_phone}
           placeholder="+995 555 12 34 56"
         />
@@ -201,33 +201,33 @@ export function EmergencyForm({ property }: { property: Property }) {
 
       <Field
         name="emergency_contact"
-        label="Emergency contact"
+        label="საგანგებო კონტაქტი"
         defaultValue={property.emergency_contact}
-        hint="Plumber, building manager, local emergency number."
-        placeholder="Building manager Giorgi — +995 555 99 88 77"
+        hint="სანტექნიკოსი, კორპუსის მმართველი, გადაუდებელი ნომერი."
+        placeholder="კორპუსის მმართველი გიორგი — +995 555 99 88 77"
       />
 
       <TextField
         name="emergency_notes"
-        label="Emergency protocol"
+        label="საგანგებო ინსტრუქცია"
         defaultValue={property.emergency_notes}
-        placeholder="Water shut-off valve is under the kitchen sink. Fuse box is by the entrance."
-        hint="The AI reads this out when a guest reports a leak, outage or similar."
+        placeholder="წყლის ონკანი სამზარეულოს ნიჟარის ქვეშ. ელექტროფარი შესასვლელთან."
+        hint="AI ამას ეტყვის სტუმარს, როცა წყალდიდობას, დენის გათიშვას ან მსგავსს შეატყობინებს."
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           name="alert_email"
-          label="Alert email"
+          label="შეტყობინების ელფოსტა"
           type="email"
           defaultValue={property.alert_email}
           placeholder="you@example.com"
         />
         <Field
           name="alert_webhook_url"
-          label="Alert webhook URL"
+          label="შეტყობინების webhook"
           defaultValue={property.alert_webhook_url}
-          hint="Slack, Make.com or an SMS gateway. Wired up in Phase 4."
+          hint="Slack, Make.com ან SMS სერვისი. არასავალდებულო."
           placeholder="https://hooks.slack.com/services/…"
         />
       </div>

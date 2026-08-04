@@ -100,7 +100,7 @@ export async function raiseAlert(input: AlertInput): Promise<void> {
   if (!webhookUrl || !alert) return;
 
   const error = await dispatchWebhook(webhookUrl, {
-    type: "hostai.alert",
+    type: "mouravi.alert",
     kind,
     severity,
     property: { id: input.property.id, name: input.property.name },

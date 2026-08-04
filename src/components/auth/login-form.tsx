@@ -57,7 +57,7 @@ export function LoginForm() {
         router.refresh();
         return;
       } else {
-        setNotice("Check your inbox to confirm your email, then sign in.");
+        setNotice("შეამოწმე ელფოსტა, დაადასტურე მისამართი და შემდეგ შედი.");
       }
       setPending(false);
       return;
@@ -81,9 +81,9 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">HostAI Concierge</CardTitle>
+        <CardTitle className="text-2xl">მოურავი</CardTitle>
         <CardDescription>
-          Your 24/7 multilingual guest assistant.
+          შენი 24/7 მრავალენოვანი დამხმარე სტუმრებისთვის.
         </CardDescription>
       </CardHeader>
 
@@ -97,14 +97,14 @@ export function LoginForm() {
           }}
         >
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign in</TabsTrigger>
-            <TabsTrigger value="signup">Create account</TabsTrigger>
+            <TabsTrigger value="signin">შესვლა</TabsTrigger>
+            <TabsTrigger value="signup">რეგისტრაცია</TabsTrigger>
           </TabsList>
 
           <TabsContent value={mode} className="pt-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">ელფოსტა</Label>
                 <Input
                   id="email"
                   type="email"
@@ -117,7 +117,7 @@ export function LoginForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">პაროლი</Label>
                 <Input
                   id="password"
                   type="password"
@@ -128,7 +128,7 @@ export function LoginForm() {
                   minLength={8}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="At least 8 characters"
+                  placeholder="მინიმუმ 8 სიმბოლო"
                 />
               </div>
 
@@ -145,7 +145,7 @@ export function LoginForm() {
                 {pending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                {mode === "signup" ? "Create account" : "Sign in"}
+                {mode === "signup" ? "რეგისტრაცია" : "შესვლა"}
               </Button>
             </form>
           </TabsContent>

@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
+import {
+  DeleteManualSaleButton,
+  ManualSaleForm,
+} from "@/components/dashboard/manual-sale-form";
 import { StripeSettings } from "@/components/dashboard/stripe-settings";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,15 +18,26 @@ import { requireUser } from "@/lib/dashboard/guard";
 import { publicEnv } from "@/lib/env";
 import type { UpsellPurchase } from "@/types/database";
 
-export const metadata = { title: "Settings · HostAI Concierge" };
+export const metadata = { title: "პარამეტრები · მოურავი" };
 
 function formatPrice(cents: number, currency: string): string {
   try {
-    return new Intl.NumberFormat("en", { style: "currency", currency }).format(
+    return new Intl.NumberFormat("ka-GE", { style: "currency", currency }).format(
       cents / 100,
     );
   } catch {
     return `${(cents / 100).toFixed(2)} ${currency}`;
+  }
+}
+
+function formatDate(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat("ka-GE", {
+      day: "numeric",
+      month: "short",
+    }).format(new Date(iso));
+  } catch {
+    return iso.slice(0, 10);
   }
 }
 
@@ -64,23 +79,83 @@ export default async function SettingsPage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
-          All properties
+          ყველა ბინა
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">პარამეტრები</h1>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">შემოსავალი შეთავაზებებიდან</CardTitle>
+          <CardDescription>
+            {Object.keys(totals).length === 0
+              ? "ჯერ არაფერი."
+              : Object.entries(totals)
+                  .map(([currency, cents]) => formatPrice(cents, currency))
+                  .join(" · ")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {purchases.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              როცა სტუმარი იყიდის იმას, რაც კონსიერჟმა შესთავაზა, აქ გამოჩნდება.
+            </p>
+          ) : (
+            <ul className="divide-y text-sm">
+              {purchases.map((purchase) => (
+                <li
+                  key={purchase.id}
+                  className="flex items-center justify-between gap-3 py-2"
+                >
+                  <span className="min-w-0 truncate text-muted-foreground">
+                    {formatDate(purchase.created_at)} ·{" "}
+                    {purchase.note ??
+                      purchase.guest_email ??
+                      (purchase.source === "manual" ? "ხელით ჩაწერილი" : "სტუმარი")}
+                  </span>
+                  <span className="flex flex-none items-center gap-2">
+                    <span className="font-medium">
+                      {formatPrice(purchase.amount_cents, purchase.currency)}
+                    </span>
+                    {purchase.source === "manual" ? (
+                      <DeleteManualSaleButton purchaseId={purchase.id} />
+                    ) : (
+                      <Badge variant="secondary">Stripe</Badge>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">გაყიდვის ჩაწერა</CardTitle>
+          <CardDescription>
+            ქართული ბანკი გადახდას ავტომატურად ვერ გვატყობინებს. როცა ბანკის
+            აპლიკაციაში დაინახავ, რომ სტუმარმა გადაიხადა, აქ ჩაწერე — რომ
+            შემოსავალი აღრიცხული იყოს.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ManualSaleForm />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle className="text-base">Stripe</CardTitle>
             <Badge variant={profile?.stripe_webhook_secret ? "secondary" : "outline"}>
-              {profile?.stripe_webhook_secret ? "connected" : "not connected"}
+              {profile?.stripe_webhook_secret ? "დაკავშირებულია" : "არასავალდებულო"}
             </Badge>
           </div>
           <CardDescription>
-            Payment Links stay in your own Stripe account — we never touch your
-            money. Connect this webhook and the dashboard can show you what the
-            concierge earned.
+            Stripe საქართველოში არ მუშაობს — ეს განყოფილება მხოლოდ იმ
+            მასპინძლებისთვისაა, ვისაც უცხოური Stripe ანგარიში აქვს. მათთვის
+            გაყიდვები ავტომატურად აღირიცხება. სხვა შემთხვევაში უბრალოდ გამოტოვე.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -91,48 +166,10 @@ export default async function SettingsPage() {
             />
           ) : (
             <p className="text-sm text-destructive">
-              Your profile is missing a webhook token. Re-run{" "}
-              <code>supabase/schema.sql</code> — it adds one to every existing
-              account.
+              პროფილს webhook-ის კოდი აკლია. ხელახლა გაუშვი{" "}
+              <code>supabase/schema.sql</code> — ის ყველა არსებულ ანგარიშს
+              დაამატებს.
             </p>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Revenue from upsells</CardTitle>
-          <CardDescription>
-            {Object.keys(totals).length === 0
-              ? "Nothing yet."
-              : Object.entries(totals)
-                  .map(([currency, cents]) => formatPrice(cents, currency))
-                  .join(" · ")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {purchases.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Sales appear here once Stripe is connected and a guest buys
-              something the concierge offered.
-            </p>
-          ) : (
-            <ul className="divide-y text-sm">
-              {purchases.map((purchase) => (
-                <li
-                  key={purchase.id}
-                  className="flex items-center justify-between gap-3 py-2"
-                >
-                  <span className="truncate text-muted-foreground">
-                    {purchase.guest_email ?? "Guest"}
-                    {purchase.upsell_id ? "" : " · unattributed"}
-                  </span>
-                  <span className="flex-none font-medium">
-                    {formatPrice(purchase.amount_cents, purchase.currency)}
-                  </span>
-                </li>
-              ))}
-            </ul>
           )}
         </CardContent>
       </Card>

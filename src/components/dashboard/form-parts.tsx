@@ -11,7 +11,7 @@ import type { ActionState } from "@/lib/dashboard/action-state";
 import { cn } from "@/lib/utils";
 
 export function SubmitButton({
-  children = "Save",
+  children = "შენახვა",
   variant = "default",
   size = "default",
   className,

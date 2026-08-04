@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 
 import { raiseAlert, shouldAlert } from "@/lib/chat/alerts";
 import { loadPropertyContext, loadRecentMessages } from "@/lib/chat/context";
@@ -37,15 +36,35 @@ function formatPrice(cents: number, currency: string): string {
 
 /**
  * Belt and braces: the prompt tells the model never to write a payment URL,
- * but a guest must never be shown one we did not mint. Strip anything that
- * looks like a Stripe link out of the model's prose. Other URLs (a restaurant
- * the host listed, a map link) are left alone — those are legitimate.
+ * but a guest must never be shown one we did not mint. Strip anything hosted
+ * on a known payment provider out of the model's prose. Other URLs (a
+ * restaurant the host listed, a map link) are left alone — those are
+ * legitimate.
+ *
+ * The list covers the providers a host in this market plausibly uses. Add to
+ * it rather than loosening it: over-stripping costs a guest one clickable
+ * link, under-stripping can send them to an invented payment page.
  */
-const FABRICATED_PAYMENT_URL =
-  /\bhttps?:\/\/(?:[a-z0-9-]+\.)*stripe\.com\/\S*/gi;
+const PAYMENT_HOSTS = [
+  "stripe\\.com",
+  "ipay\\.ge",
+  "bog\\.ge",
+  "tbcbank\\.ge",
+  "tbcpay\\.ge",
+  "unipay\\.com",
+  "payze\\.io",
+  "paysera\\.com",
+  "paypal\\.(?:com|me)",
+  "revolut\\.me",
+].join("|");
+
+const FABRICATED_PAYMENT_URL = new RegExp(
+  `\\bhttps?://(?:[a-z0-9-]+\\.)*(?:${PAYMENT_HOSTS})/\\S*`,
+  "gi",
+);
 
 /**
- * Attaches the host's real Stripe link.
+ * Attaches the host's real payment link.
  *
  * The model picks an offer id; it never writes a URL. That way a hallucinated
  * link cannot reach a guest — the worst bug this product could ship.
@@ -56,12 +75,14 @@ function attachPaymentLink(
   chatSessionId: string,
 ): string {
   const clean = reply.replace(FABRICATED_PAYMENT_URL, "").trim();
-  if (!upsell?.stripe_payment_link) return clean;
+  if (!upsell?.payment_link) return clean;
 
   // Stripe passes client_reference_id straight through to the completed
   // checkout session, so this is what turns a payment into attributed revenue:
-  // which offer, and which conversation sold it.
-  let link = upsell.stripe_payment_link;
+  // which offer, and which conversation sold it. Providers that ignore the
+  // parameter simply drop it — the link still works, the sale just has to be
+  // ticked off by hand in the dashboard.
+  let link = upsell.payment_link;
   try {
     const url = new URL(link);
     url.searchParams.set("client_reference_id", `${upsell.id}_${chatSessionId}`);
@@ -78,7 +99,7 @@ function attachPaymentLink(
 }
 
 export async function POST(request: Request) {
-  const limit = rateLimit(clientKey(request, "chat"), 30, 60_000);
+  const limit = await rateLimit(clientKey(request, "chat"), 30, 60_000);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: "You're sending messages very fast. Give me a second." },
@@ -191,9 +212,12 @@ export async function POST(request: Request) {
       imageUrl: image,
     });
   } catch (error) {
-    const overloaded =
-      error instanceof Anthropic.APIError &&
-      (error.status === 429 || error.status === 529);
+    // The Gemini SDK surfaces the HTTP status on the error object rather than
+    // through a typed error class, so read it structurally. 429 is the free
+    // tier's rate limit and 503 is model overload — both are "try again",
+    // unlike a 400 that will fail identically every time.
+    const status = (error as { status?: number })?.status;
+    const overloaded = status === 429 || status === 503;
 
     console.error("[chat] generateReply failed", error);
 

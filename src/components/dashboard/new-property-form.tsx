@@ -14,14 +14,14 @@ export function NewPropertyForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           name="name"
-          label="Property name"
+          label="ბინის სახელი"
           required
-          placeholder="Seaside Studio, Batumi"
+          placeholder="ზღვისპირა სტუდიო, ბათუმი"
         />
-        <Field name="address" label="Address" placeholder="12 Rustaveli Ave" />
+        <Field name="address" label="მისამართი" placeholder="რუსთაველის 12" />
       </div>
       <div className="flex items-center gap-3">
-        <SubmitButton>Create property</SubmitButton>
+        <SubmitButton>ბინის შექმნა</SubmitButton>
         <FormStatus state={state} />
       </div>
     </form>

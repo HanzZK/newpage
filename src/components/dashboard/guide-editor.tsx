@@ -16,16 +16,16 @@ import { idleState } from "@/lib/dashboard/action-state";
 import type { GuideCategory, LocalGuide } from "@/types/database";
 
 const CATEGORIES: { value: GuideCategory; label: string }[] = [
-  { value: "restaurant", label: "Restaurant" },
-  { value: "cafe", label: "Café" },
-  { value: "bar", label: "Bar" },
-  { value: "grocery", label: "Grocery" },
-  { value: "pharmacy", label: "Pharmacy" },
-  { value: "transport", label: "Transport" },
-  { value: "attraction", label: "Attraction" },
-  { value: "beach", label: "Beach" },
-  { value: "emergency", label: "Emergency" },
-  { value: "other", label: "Other" },
+  { value: "restaurant", label: "რესტორანი" },
+  { value: "cafe", label: "კაფე" },
+  { value: "bar", label: "ბარი" },
+  { value: "grocery", label: "მაღაზია" },
+  { value: "pharmacy", label: "აფთიაქი" },
+  { value: "transport", label: "ტრანსპორტი" },
+  { value: "attraction", label: "ღირსშესანიშნაობა" },
+  { value: "beach", label: "პლაჟი" },
+  { value: "emergency", label: "გადაუდებელი" },
+  { value: "other", label: "სხვა" },
 ];
 
 function GuideForm({
@@ -45,13 +45,13 @@ function GuideForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           name="title"
-          label="Name"
+          label="დასახელება"
           required
           defaultValue={guide?.title}
-          placeholder="Café Littera"
+          placeholder="კაფე ლიტერა"
         />
         <div className="space-y-1.5">
-          <Label htmlFor={`category-${guide?.id ?? "new"}`}>Category</Label>
+          <Label htmlFor={`category-${guide?.id ?? "new"}`}>კატეგორია</Label>
           <select
             id={`category-${guide?.id ?? "new"}`}
             name="category"
@@ -69,35 +69,35 @@ function GuideForm({
 
       <TextField
         name="description"
-        label="Why you recommend it"
+        label="რატომ გირჩევ"
         rows={3}
         defaultValue={guide?.description}
-        placeholder="Best khinkali in the neighbourhood. Book ahead on weekends."
+        placeholder="უბანში საუკეთესო ხინკალი. შაბათ-კვირას ჯობია წინასწარ დაჯავშნა."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Field
           name="address"
-          label="Address"
+          label="მისამართი"
           defaultValue={guide?.address}
-          placeholder="13 Machabeli St"
+          placeholder="მაჩაბლის 13"
         />
         <Field
           name="walking_time"
-          label="Distance"
+          label="მანძილი"
           defaultValue={guide?.walking_time}
-          placeholder="6 min walk"
+          placeholder="6 წუთის სავალი"
         />
         <Field
           name="url"
-          label="Link"
+          label="ბმული"
           defaultValue={guide?.url}
           placeholder="https://maps.app.goo.gl/…"
         />
       </div>
 
       <div className="flex items-center gap-3">
-        <SubmitButton>{guide ? "Save" : "Add place"}</SubmitButton>
+        <SubmitButton>{guide ? "შენახვა" : "ადგილის დამატება"}</SubmitButton>
         <FormStatus state={state} />
       </div>
     </form>
@@ -117,7 +117,7 @@ function DeleteButton({
       <input type="hidden" name="guideId" value={guideId} />
       <SubmitButton variant="ghost" size="sm">
         <Trash2 className="h-4 w-4" aria-hidden />
-        <span className="sr-only">Delete place</span>
+        <span className="sr-only">ადგილის წაშლა</span>
       </SubmitButton>
     </form>
   );

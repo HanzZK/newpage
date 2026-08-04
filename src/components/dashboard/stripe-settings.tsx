@@ -37,7 +37,7 @@ export function StripeSettings({
   return (
     <div className="space-y-5">
       <div className="space-y-1.5">
-        <Label htmlFor="webhook-url">Your webhook URL</Label>
+        <Label htmlFor="webhook-url">შენი webhook-ის მისამართი</Label>
         <div className="flex gap-2">
           <Input id="webhook-url" readOnly value={webhookUrl} />
           <Button
@@ -45,7 +45,7 @@ export function StripeSettings({
             variant="outline"
             size="icon"
             onClick={copy}
-            aria-label="Copy webhook URL"
+            aria-label="მისამართის კოპირება"
           >
             {copied ? (
               <Check className="h-4 w-4" aria-hidden />
@@ -55,20 +55,20 @@ export function StripeSettings({
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          In Stripe: Developers → Webhooks → Add endpoint. Paste this URL and
-          subscribe to <code>checkout.session.completed</code> only.
+          Stripe-ში: Developers → Webhooks → Add endpoint. ჩასვი ეს მისამართი და
+          მონიშნე მხოლოდ <code>checkout.session.completed</code>.
         </p>
       </div>
 
       <form action={formAction} className="space-y-4">
         <Field
           name="stripe_webhook_secret"
-          label="Signing secret"
-          placeholder={hasSecret ? "•••••••• (saved)" : "whsec_…"}
-          hint="Shown once when you create the endpoint, under 'Signing secret'. Leave blank to keep the current one."
+          label="ხელმოწერის კოდი"
+          placeholder={hasSecret ? "•••••••• (შენახულია)" : "whsec_…"}
+          hint="ერთხელ ჩანს endpoint-ის შექმნისას, 'Signing secret'-ში. ცარიელი დატოვე, თუ არსებულის შეცვლა არ გინდა."
         />
         <div className="flex items-center gap-3">
-          <SubmitButton>Save</SubmitButton>
+          <SubmitButton>შენახვა</SubmitButton>
           <FormStatus state={state} />
         </div>
       </form>
@@ -76,7 +76,7 @@ export function StripeSettings({
       {hasSecret ? (
         <form action={disconnectStripe}>
           <SubmitButton variant="outline" size="sm">
-            Disconnect Stripe
+            Stripe-ის გათიშვა
           </SubmitButton>
         </form>
       ) : null}

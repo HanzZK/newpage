@@ -16,12 +16,16 @@ const BUCKET = "guest-uploads";
 /**
  * Public, unauthenticated endpoint — a guest scanning a QR code has no account.
  * Every input is therefore treated as hostile: the property must exist and be
- * live, the MIME type must be one Claude's vision API accepts, the size is
+ * live, the MIME type must be one the model's vision accepts, the size is
  * capped, and the stored filename is generated rather than taken from the
  * client.
+ *
+ * The `path` shape below (`<propertyId>/<uuid>.<ext>`) and the public URL it
+ * produces are what `isOwnUpload` matches against in `../route.ts`. Changing
+ * either without changing that check silently drops every photo.
  */
 export async function POST(request: Request) {
-  const limit = rateLimit(clientKey(request, "upload"), 20, 60_000);
+  const limit = await rateLimit(clientKey(request, "upload"), 20, 60_000);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: "Too many uploads. Wait a moment and try again." },

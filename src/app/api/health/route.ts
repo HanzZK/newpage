@@ -14,7 +14,7 @@ export async function GET() {
     supabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
     supabaseAnonKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
     supabaseServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
-    anthropicApiKey: Boolean(process.env.ANTHROPIC_API_KEY),
+    geminiApiKey: Boolean(process.env.GEMINI_API_KEY),
     siteUrl: Boolean(process.env.NEXT_PUBLIC_SITE_URL),
   };
 

@@ -30,7 +30,7 @@ function propertyId(formData: FormData): string {
 
 const NOT_FOUND: ActionState = {
   ok: false,
-  message: "Property not found, or it is not yours.",
+  message: "ბინა ვერ მოიძებნა, ან შენი არ არის.",
 };
 
 // ---------------------------------------------------------------------
@@ -54,7 +54,7 @@ async function updateProperty(
 
   revalidatePath(`/dashboard/properties/${id}`);
   revalidatePath("/dashboard");
-  return { ok: true, message: "Saved." };
+  return { ok: true, message: "შენახულია." };
 }
 
 export async function saveEssentials(
@@ -235,8 +235,8 @@ export async function saveUpsell(
     title: text(formData, "title"),
     description: text(formData, "description"),
     price: text(formData, "price") || "0",
-    currency: (text(formData, "currency") || "EUR").toUpperCase(),
-    stripe_payment_link: text(formData, "stripe_payment_link"),
+    currency: text(formData, "currency") || "GEL",
+    payment_link: text(formData, "payment_link"),
     trigger_keywords: text(formData, "trigger_keywords"),
     is_active: checkbox(formData, "is_active"),
   });

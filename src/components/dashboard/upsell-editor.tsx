@@ -22,7 +22,7 @@ import type { Upsell } from "@/types/database";
 
 export function formatPrice(cents: number, currency: string): string {
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat("ka-GE", {
       style: "currency",
       currency,
     }).format(cents / 100);
@@ -49,36 +49,36 @@ function UpsellForm({
 
       <Field
         name="title"
-        label="Offer"
+        label="შეთავაზება"
         required
         defaultValue={upsell?.title}
-        placeholder="Late check-out until 18:00"
+        placeholder="გვიანი გასვლა 18:00-მდე"
       />
 
       <TextField
         name="description"
-        label="Description"
+        label="აღწერა"
         rows={2}
         defaultValue={upsell?.description}
-        placeholder="Keep the apartment for the afternoon. Subject to availability."
+        placeholder="ბინა შუადღემდე რჩება თქვენთან. ხელმისაწვდომობის მიხედვით."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Field
           name="price"
-          label="Price"
+          label="ფასი"
           required
           defaultValue={
             upsell ? (upsell.price_cents / 100).toFixed(2) : undefined
           }
-          placeholder="25.00"
+          placeholder="30.00"
         />
         <Field
           name="currency"
-          label="Currency"
+          label="ვალუტა"
           required
-          defaultValue={upsell?.currency ?? "EUR"}
-          placeholder="EUR"
+          defaultValue={upsell?.currency ?? "GEL"}
+          placeholder="GEL"
         />
         <div className="flex items-center gap-3 pt-6">
           <Switch
@@ -87,29 +87,29 @@ function UpsellForm({
             defaultChecked={upsell?.is_active ?? true}
           />
           <Label htmlFor={switchId} className="font-normal">
-            Offer this
+            შევთავაზო
           </Label>
         </div>
       </div>
 
       <Field
-        name="stripe_payment_link"
-        label="Stripe Payment Link"
-        defaultValue={upsell?.stripe_payment_link}
-        placeholder="https://buy.stripe.com/…"
-        hint="Stripe Dashboard → Payment Links → create one → paste the URL. The AI sends this when a guest accepts."
+        name="payment_link"
+        label="გადახდის ბმული"
+        defaultValue={upsell?.payment_link}
+        placeholder="https://…"
+        hint="შექმენი ბმული შენი ბანკის ბიზნეს კაბინეტში (TBC, საქართველოს ბანკი, unipay) ან Stripe-ში და ჩასვი აქ. ფული პირდაპირ შენს ანგარიშზე მიდის — ჩვენ არ ვეხებით."
       />
 
       <Field
         name="trigger_keywords"
-        label="Trigger phrases"
+        label="გამომწვევი ფრაზები"
         defaultValue={upsell?.trigger_keywords.join(", ")}
-        placeholder="late checkout, stay longer, leave later"
-        hint="Comma-separated. When a guest's message matches, the AI brings this offer up."
+        placeholder="გვიანი გასვლა, მეტხანს დარჩენა, გვიან წასვლა"
+        hint="მძიმით გამოყოფილი. როცა სტუმრის შეტყობინება ემთხვევა, AI ამ შეთავაზებას გააკეთებს."
       />
 
       <div className="flex items-center gap-3">
-        <SubmitButton>{upsell ? "Save" : "Add offer"}</SubmitButton>
+        <SubmitButton>{upsell ? "შენახვა" : "შეთავაზების დამატება"}</SubmitButton>
         <FormStatus state={state} />
       </div>
     </form>
@@ -129,7 +129,7 @@ function DeleteButton({
       <input type="hidden" name="upsellId" value={upsellId} />
       <SubmitButton variant="ghost" size="sm">
         <Trash2 className="h-4 w-4" aria-hidden />
-        <span className="sr-only">Delete offer</span>
+        <span className="sr-only">შეთავაზების წაშლა</span>
       </SubmitButton>
     </form>
   );
@@ -153,10 +153,10 @@ export function UpsellEditor({
                 {formatPrice(upsell.price_cents, upsell.currency)}
               </Badge>
               {upsell.is_active ? null : (
-                <Badge variant="outline">paused</Badge>
+                <Badge variant="outline">შეჩერებული</Badge>
               )}
-              {upsell.stripe_payment_link ? null : (
-                <Badge variant="destructive">no payment link</Badge>
+              {upsell.payment_link ? null : (
+                <Badge variant="destructive">გადახდის ბმული არ არის</Badge>
               )}
             </div>
             <DeleteButton propertyId={propertyId} upsellId={upsell.id} />
@@ -169,7 +169,7 @@ export function UpsellEditor({
 
       <Card className="border-dashed">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Add an offer</CardTitle>
+          <CardTitle className="text-base">ახალი შეთავაზება</CardTitle>
         </CardHeader>
         <CardContent>
           <UpsellForm key={`new-${upsells.length}`} propertyId={propertyId} />

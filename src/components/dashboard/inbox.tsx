@@ -14,11 +14,11 @@ import type { Alert, ChatSession } from "@/types/database";
 
 function when(iso: string): string {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return "ახლახან";
+  if (minutes < 60) return `${minutes} წთ წინ`;
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
+  if (hours < 24) return `${hours} სთ წინ`;
+  return `${Math.round(hours / 24)} დღ წინ`;
 }
 
 const SEVERITY_VARIANT = {
@@ -46,16 +46,16 @@ export function Inbox({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <AlertTriangle className="h-4 w-4" aria-hidden />
-            Needs your attention
+            საჭიროებს ყურადღებას
           </CardTitle>
           <CardDescription>
-            Raised when a guest sounds unhappy or reports something urgent.
+            ჩნდება, როცა სტუმარი უკმაყოფილოა ან რაიმე გადაუდებელს იტყობინება.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {open.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nothing open. Guests are happy.
+              ღია არაფერია. სტუმრები კმაყოფილები არიან.
             </p>
           ) : (
             open.map((alert) => (
@@ -75,8 +75,8 @@ export function Inbox({
                     {alert.delivered ? null : (
                       <span className="text-xs text-muted-foreground">
                         {alert.delivery_error
-                          ? `webhook failed: ${alert.delivery_error}`
-                          : "no webhook configured"}
+                          ? `webhook ვერ გაიგზავნა: ${alert.delivery_error}`
+                          : "webhook არ არის მითითებული"}
                       </span>
                     )}
                   </div>
@@ -91,7 +91,7 @@ export function Inbox({
                   <input type="hidden" name="propertyId" value={propertyId} />
                   <input type="hidden" name="alertId" value={alert.id} />
                   <SubmitButton variant="outline" size="sm">
-                    Mark handled
+                    მოგვარებულად მონიშვნა
                   </SubmitButton>
                 </form>
               </div>
@@ -105,13 +105,13 @@ export function Inbox({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <MessageSquare className="h-4 w-4" aria-hidden />
-              Recent conversations
+              ბოლო საუბრები
             </CardTitle>
           </CardHeader>
           <CardContent>
             {sessions.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No guest has scanned the code yet.
+                კოდი ჯერ არავის დაუსკანერებია.
               </p>
             ) : (
               <ul className="space-y-2 text-sm">
@@ -122,8 +122,8 @@ export function Inbox({
                   >
                     <span className="text-muted-foreground">
                       {session.language
-                        ? `Guest speaking ${session.language}`
-                        : "Guest"}
+                        ? `სტუმარი — ${session.language}`
+                        : "სტუმარი"}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {when(session.last_seen_at)}
@@ -139,12 +139,12 @@ export function Inbox({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Frown className="h-4 w-4" aria-hidden />
-              Already handled
+              მოგვარებული
             </CardTitle>
           </CardHeader>
           <CardContent>
             {handled.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nothing yet.</p>
+              <p className="text-sm text-muted-foreground">ჯერ არაფერი.</p>
             ) : (
               <ul className="space-y-2 text-sm text-muted-foreground">
                 {handled.slice(0, 8).map((alert) => (

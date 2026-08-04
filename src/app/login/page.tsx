@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata = {
-  title: "Sign in · HostAI Concierge",
+  title: "შესვლა · მოურავი",
 };
 
 export default function LoginPage() {

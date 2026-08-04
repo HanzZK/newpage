@@ -16,7 +16,7 @@ export const runtime = "nodejs";
  * check happens here. There is no account; that is the product.
  */
 export async function GET(request: Request) {
-  const limit = rateLimit(clientKey(request, "history"), 60, 60_000);
+  const limit = await rateLimit(clientKey(request, "history"), 60, 60_000);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: "Slow down a moment." },

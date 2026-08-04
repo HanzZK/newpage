@@ -36,7 +36,7 @@ export function QrPanel({
     if (!canvas) return;
 
     const link = document.createElement("a");
-    link.download = `hostai-qr-${slug()}.png`;
+    link.download = `mouravi-qr-${slug()}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   }
@@ -65,7 +65,7 @@ export function QrPanel({
 
         <div className="flex-1 space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="chat-url">Guest link</Label>
+            <Label htmlFor="chat-url">სტუმრის ბმული</Label>
             <div className="flex gap-2">
               <Input id="chat-url" readOnly value={chatUrl} />
               <Button
@@ -73,7 +73,7 @@ export function QrPanel({
                 variant="outline"
                 size="icon"
                 onClick={handleCopy}
-                aria-label="Copy guest link"
+                aria-label="ბმულის კოპირება"
               >
                 {copied ? (
                   <Check className="h-4 w-4" aria-hidden />
@@ -83,19 +83,19 @@ export function QrPanel({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              The guest chat lands here in Phase 3. The QR code below already
-              points at it, so anything you print now stays valid.
+              ეს არის მისამართი, რომელსაც QR კოდი ხსნის. თუ დომენს შეცვლი,
+              კოდი ხელახლა უნდა დაბეჭდო.
             </p>
           </div>
 
           <Button type="button" onClick={handleDownload}>
             <Download className="mr-2 h-4 w-4" aria-hidden />
-            Download PNG ({EXPORT_SIZE}px)
+            PNG-ის ჩამოტვირთვა ({EXPORT_SIZE}px)
           </Button>
 
           <p className="text-xs text-muted-foreground">
-            Print it and put it on the fridge or inside the welcome folder. No
-            app, no login — the guest scans and starts talking.
+            დაბეჭდე და მაცივარზე ან საინფორმაციო საქაღალდეში დადე. აპლიკაცია და
+            რეგისტრაცია არ სჭირდება — სტუმარი სკანირებს და პირდაპირ წერს.
           </p>
         </div>
       </div>

@@ -31,7 +31,7 @@ export async function createProperty(
   if (error || !data) {
     return {
       ok: false,
-      message: error?.message ?? "Could not create the property.",
+      message: error?.message ?? "ბინა ვერ შეიქმნა.",
     };
   }
 
