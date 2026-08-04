@@ -5,8 +5,9 @@ property profile and gets a QR code; the guest scans it and talks to an AI that
 knows the wifi password, how the washing machine works, when the bins go out,
 and which upsells are for sale.
 
-**Status: Phase 4 complete** — the concierge answers guests, reads their photos,
-judges sentiment, offers paid extras and alerts the host.
+**Status: all five phases complete.** New here? Read
+[`CLAUDE.md`](CLAUDE.md) — it is the project memory: what this is, what is
+done, what is not, and the invariants not to break.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
@@ -14,7 +15,7 @@ judges sentiment, offers paid extras and alerts the host.
 | 2 | Host dashboard, property editor, QR generator | ✅ done |
 | 3 | Guest chat UI (`/chat/[propertyId]`) + image upload | ✅ done |
 | 4 | Claude API route, master system prompt, sentiment + upsell logic | ✅ done |
-| 5 | Stripe, webhooks, Vercel deploy | next |
+| 5 | Stripe, webhooks, Vercel deploy | ✅ done |
 
 To run Phase 4 you need `ANTHROPIC_API_KEY` in `.env.local`. Without it the
 guest chat returns an error on send; everything else still works.
@@ -72,8 +73,10 @@ Then fill it in:
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` locally | Phase 1 |
 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys | Phase 4 |
 | `ANTHROPIC_MODEL` | defaults to `claude-sonnet-5` | Phase 4 |
-| `STRIPE_SECRET_KEY` | Stripe dashboard → Developers → API keys | Phase 5 |
-| `STRIPE_WEBHOOK_SECRET` | Stripe → Developers → Webhooks | Phase 5 |
+
+Stripe needs no app-level keys: Payment Links live in the host's own Stripe
+account, and each host pastes their own webhook signing secret into
+`/dashboard/settings`.
 
 > `SUPABASE_SERVICE_ROLE_KEY` bypasses Row Level Security. It must never be
 > prefixed with `NEXT_PUBLIC_` and never imported into a `"use client"` file.
@@ -167,3 +170,16 @@ Three deliberate constraints:
 
 Alerts are written to the database first and delivered to the host's webhook
 second, so a failed delivery still leaves a trail in the property's Inbox tab.
+
+## Revenue
+
+Payment Links belong to the host's own Stripe account — this app never touches
+the money. When the concierge sends a link it appends
+`client_reference_id=<upsellId>_<sessionId>`, which Stripe passes back on
+`checkout.session.completed`, so a sale is attributed to the exact offer and
+the exact conversation that produced it.
+
+## Deploying
+
+See [`DEPLOYMENT.md`](DEPLOYMENT.md). `GET /api/health` returns 503 and names
+any missing environment variable.

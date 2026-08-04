@@ -29,8 +29,26 @@ export type Profile = {
   email: string | null;
   full_name: string | null;
   plan: Plan;
+  /** Signing secret from the host's own Stripe webhook endpoint. */
+  stripe_webhook_secret: string | null;
+  /** Opaque path segment for that endpoint, so the host's user id stays private. */
+  stripe_webhook_token: string;
   created_at: string;
   updated_at: string;
+};
+
+export type UpsellPurchase = {
+  id: string;
+  host_id: string;
+  property_id: string | null;
+  upsell_id: string | null;
+  session_id: string | null;
+  stripe_event_id: string;
+  stripe_checkout_session_id: string | null;
+  amount_cents: number;
+  currency: string;
+  guest_email: string | null;
+  created_at: string;
 };
 
 export type Property = {
@@ -161,6 +179,7 @@ export type Database = {
       chat_sessions: Row<ChatSession>;
       chat_messages: Row<ChatMessage>;
       alerts: Row<Alert>;
+      upsell_purchases: Row<UpsellPurchase>;
     };
     // Note the `{ [_ in never]: never }` idiom — `Record<string, never>`
     // would make `keyof Views` equal `string`, and PostgREST's select-query

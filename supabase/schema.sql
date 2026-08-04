@@ -295,3 +295,47 @@ create policy "guest_uploads_read" on storage.objects
 
 -- Uploads are performed server-side with the service role key, so no
 -- public insert policy is granted here on purpose.
+
+-- =====================================================================
+-- Phase 5 — Stripe revenue tracking
+--
+-- Payment Links belong to the HOST's own Stripe account, not ours, so the
+-- host points their Stripe webhook at a URL carrying their own opaque token
+-- and pastes their signing secret. No Stripe Connect onboarding, no platform
+-- account, nothing for the host to approve beyond a webhook endpoint.
+-- =====================================================================
+
+alter table public.profiles
+  add column if not exists stripe_webhook_secret text,
+  add column if not exists stripe_webhook_token uuid not null default gen_random_uuid();
+
+create unique index if not exists profiles_stripe_webhook_token_idx
+  on public.profiles(stripe_webhook_token);
+
+create table if not exists public.upsell_purchases (
+  id                          uuid primary key default gen_random_uuid(),
+  host_id                     uuid not null references public.profiles(id) on delete cascade,
+  property_id                 uuid references public.properties(id) on delete set null,
+  upsell_id                   uuid references public.upsells(id) on delete set null,
+  session_id                  uuid references public.chat_sessions(id) on delete set null,
+
+  -- Stripe sends every event at least once. This makes replays a no-op.
+  stripe_event_id             text not null unique,
+  stripe_checkout_session_id  text,
+
+  amount_cents                int not null default 0 check (amount_cents >= 0),
+  currency                    text not null default 'EUR',
+  guest_email                 text,
+  created_at                  timestamptz not null default now()
+);
+
+create index if not exists upsell_purchases_host_id_idx
+  on public.upsell_purchases(host_id, created_at desc);
+create index if not exists upsell_purchases_property_id_idx
+  on public.upsell_purchases(property_id, created_at desc);
+
+alter table public.upsell_purchases enable row level security;
+
+drop policy if exists "upsell_purchases_select_own" on public.upsell_purchases;
+create policy "upsell_purchases_select_own" on public.upsell_purchases
+  for select using (auth.uid() = host_id);

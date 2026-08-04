@@ -50,13 +50,31 @@ const FABRICATED_PAYMENT_URL =
  * The model picks an offer id; it never writes a URL. That way a hallucinated
  * link cannot reach a guest — the worst bug this product could ship.
  */
-function attachPaymentLink(reply: string, upsell: Upsell | undefined): string {
+function attachPaymentLink(
+  reply: string,
+  upsell: Upsell | undefined,
+  chatSessionId: string,
+): string {
   const clean = reply.replace(FABRICATED_PAYMENT_URL, "").trim();
   if (!upsell?.stripe_payment_link) return clean;
+
+  // Stripe passes client_reference_id straight through to the completed
+  // checkout session, so this is what turns a payment into attributed revenue:
+  // which offer, and which conversation sold it.
+  let link = upsell.stripe_payment_link;
+  try {
+    const url = new URL(link);
+    url.searchParams.set("client_reference_id", `${upsell.id}_${chatSessionId}`);
+    link = url.toString();
+  } catch {
+    // Host pasted something that is not a URL; send it unchanged rather than
+    // dropping the offer entirely.
+  }
+
   return `${clean}\n\n${upsell.title} — ${formatPrice(
     upsell.price_cents,
     upsell.currency,
-  )}\n${upsell.stripe_payment_link}`;
+  )}\n${link}`;
 }
 
 export async function POST(request: Request) {
@@ -193,7 +211,7 @@ export async function POST(request: Request) {
     ? context.upsells.find((candidate) => candidate.id === reply.upsellId)
     : undefined;
 
-  const guestText = attachPaymentLink(reply.text, upsell);
+  const guestText = attachPaymentLink(reply.text, upsell, activeSessionId);
 
   await supabase.from("chat_messages").insert({
     session_id: activeSessionId,
